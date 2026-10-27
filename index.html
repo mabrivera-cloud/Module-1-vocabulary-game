@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary Games</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
+      color: var(--primary);
+    }
+
+    /* Score Board desdoblado en 3 líneas + Total */
+    .score-board {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .score-row:last-child {
+      border-bottom: none;
+      font-weight: bold;
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 2px solid #cbd5e1;
+    }
+
+    .score-correct { color: var(--success); }
+    .score-incorrect { color: var(--error); }
+
+    .nav {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+    }
+
+    .nav button {
+      flex: 1;
+      padding: 8px 4px;
+      border: 2px solid var(--primary);
+      background: transparent;
+      color: var(--primary);
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .nav button.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .game-card {
+      display: none;
+    }
+
+    .game-card.active {
+      display: block;
+    }
+
+    .prompt-box {
+      background: #eef2ff;
+      padding: 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      font-size: 1.1rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .option-btn {
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+
+    .option-btn:hover {
+      background: #f9fafb;
+    }
+
+    .btn-submit, .btn-next {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-submit:hover, .btn-next:hover {
+      background: var(--primary-hover);
+    }
+
+    .result-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .result-box.correct {
+      background: #ecfdf5;
+      border: 1px solid var(--success);
+      color: #065f46;
+    }
+
+    .result-box.incorrect {
+      background: #fef2f2;
+      border: 1px solid var(--error);
+      color: #991b1b;
+    }
+
+    .solution-details {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Vocabulary Games</h1>
+
+  <!-- Desglosado Score Board -->
+  <div class="score-board">
+    <div class="score-row">
+      <span>Game 1: Guess the Word</span>
+      <span>Correct: <strong id="g1-correct" class="score-correct">0</strong> | Incorrect: <strong id="g1-incorrect" class="score-incorrect">0</strong></span>
+    </div>
+    <div class="score-row">
+      <span>Game 2: Guess the Definition</span>
+      <span>Correct: <strong id="g2-correct" class="score-correct">0</strong> | Incorrect: <strong id="g2-incorrect" class="score-incorrect">0</strong></span>
+    </div>
+    <div class="score-row">
+      <span>Game 3: Word from Definition</span>
+      <span>Correct: <strong id="g3-correct" class="score-correct">0</strong> | Incorrect: <strong id="g3-incorrect" class="score-incorrect">0</strong></span>
+    </div>
+    <div class="score-row">
+      <span>Total Combined</span>
+      <span>Correct: <strong id="total-correct" class="score-correct">0</strong> | Incorrect: <strong id="total-incorrect" class="score-incorrect">0</strong></span>
+    </div>
+  </div>
+
+  <div id="app">
+    <div class="nav">
+      <button id="nav-g1" class="active" onclick="switchGame(1)">1. Guess Word</button>
+      <button id="nav-g2" onclick="switchGame(2)">2. Guess Def.</button>
+      <button id="nav-g3" onclick="switchGame(3)">3. Word from Def.</button>
+    </div>
+
+    <!-- GAME 1 -->
+    <div id="game1" class="game-card active">
+      <div class="prompt-box" id="g1-prompt"></div>
+      <input type="text" id="g1-input" placeholder="Type the word in English..." onkeydown="if(event.key==='Enter') checkGame1()">
+      <button id="g1-submit" class="btn-submit" onclick="checkGame1()">Submit</button>
+      
+      <div id="g1-result" class="result-box">
+        <div id="g1-status"></div>
+        <div class="solution-details" id="g1-solution"></div>
+        <br>
+        <button class="btn-next" onclick="nextGame1()">Next Word</button>
+      </div>
+    </div>
+
+    <!-- GAME 2 -->
+    <div id="game2" class="game-card">
+      <div class="prompt-box" id="g2-prompt"></div>
+      <div id="g2-options" class="options-grid"></div>
+      
+      <div id="g2-result" class="result-box">
+        <div id="g2-status"></div>
+        <div class="solution-details" id="g2-solution"></div>
+        <br>
+        <button class="btn-next" onclick="nextGame2()">Next Question</button>
+      </div>
+    </div>
+
+    <!-- GAME 3 -->
+    <div id="game3" class="game-card">
+      <div class="prompt-box" id="g3-prompt"></div>
+      <div id="g3-options" class="options-grid"></div>
+      
+      <div id="g3-result" class="result-box">
+        <div id="g3-status"></div>
+        <div class="solution-details" id="g3-solution"></div>
+        <br>
+        <button class="btn-next" onclick="nextGame3()">Next Question</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const vocabulary = [
+    { col1: "nature", col2: "The basic or inherent features, characters, or qualities of something or someone, often referring to genetics.", col3: "Naturaleza / Genética" },
+    { col1: "nurture", col2: "The care and encouragement given to someone while they are growing and developing.", col3: "Crianza / Educación" },
+    { col1: "firstborn child", col2: "The child who is born first in a family.", col3: "Primogénito / Primer hijo" },
+    { col1: "the middle child", col2: "A child born between the firstborn and the youngest child in a family.", col3: "El hijo mediano" },
+    { col1: "the youngest child", col2: "The child in a family who was born most recently.", col3: "El hijo menor / El benjamín" },
+    { col1: "the only child", col2: "A person who has no brothers or sisters.", col3: "Hijo/a único/a" },
+    { col1: "to steer", col2: "To guide, direct, or control the course or direction of someone or something.", col3: "Dirigir / Guiar" },
+    { col1: "to debunk", col2: "To expose the falseness or myth of an idea, belief, or statement.", col3: "Desmentir / Desmitificar" },
+    { col1: "shuffle", col2: "To rearrange or mix things into a different order, or to walk dragging one's feet.", col3: "Mezclar / Arrastrar los pies" },
+    { col1: "overshadowed", col2: "Made to seem less important, prominent, or impressive in comparison to something else.", col3: "Opacado / En la sombra" },
+    { col1: "drained", col2: "Feeling extremely tired, exhausted, or depleted of energy.", col3: "Exhausto / Agotado" },
+    { col1: "flesh and blood", col2: "A human being, or one's own family and relatives.", col3: "De carne y hueso / Propia sangre" },
+    { col1: "fairness", col2: "Impartial and just treatment or behavior without favoritism or discrimination.", col3: "Equidad / Imparcialidad / Justicia" },
+    { col1: "self-assured", col2: "Having or showing confidence in oneself and one's abilities.", col3: "Seguro de sí mismo" },
+    { col1: "siblings", col2: "Brothers or sisters.", col3: "Hermanos/as" },
+    { col1: "cautious", col2: "Careful to avoid potential problems or dangers.", col3: "Cauteloso / Precavido" },
+    { col1: "high-achieving", col2: "Successfully reaching a high level of performance or accomplishment.", col3: "De alto rendimiento / Exitoso" },
+    { col1: "bossy", col2: "Fond of giving people orders and domineering.", col3: "Mandón / Mandona" },
+    { col1: "secretive", col2: "Inclined to conceal or hide thoughts, feelings, or actions.", col3: "Reservado / Sigiloso" },
+    { col1: "level-headed", col2: "Calm, sensible, and composed when making decisions.", col3: "Sensato / Equilibrado / Centrado" },
+    { col1: "flexible", col2: "Able to adapt easily to different situations or change plans without difficulty.", col3: "Flexible / Adaptable" },
+    { col1: "competitive", col2: "Having a strong desire to win or be more successful than others.", col3: "Competitivo/a" },
+    { col1: "risk-taker", col2: "A person who is willing to take bold or perilous actions in the hope of good results.", col3: "Persona arriesgada / Que asume riesgos" },
+    { col1: "self-centered", col2: "Preoccupied with oneself and one's own affairs; selfish.", col3: "Egocéntrico / Ensimismado" },
+    { col1: "outgoing", col2: "Friendly, socially confident, and extroverted.", col3: "Extrovertido / Sociable" },
+    { col1: "diligent", col2: "Showing steady, earnest, and energetic effort in doing work.", col3: "Diligente / Aplicado" },
+    { col1: "sensitive", col2: "Quick to detect, respond to, or be affected by emotional or physical changes.", col3: "Sensible" },
+    { col1: "demanding", col2: "Requiring much time, attention, or effort; hard to satisfy.", col3: "Exigente" },
+    { col1: "private", col2: "Preferring to keep personal affairs concealed from public knowledge.", col3: "Reservado / Discreto" },
+    { col1: "nuclear family", col2: "A family group consisting of parents and their children living as a single unit.", col3: "Familia nuclear (padres e hijos)" },
+    { col1: "same-sex couple", col2: "A couple consisting of two partners of the same gender.", col3: "Pareja del mismo sexo" },
+    { col1: "multiracial familiy", col2: "A family whose members belong to two or more different racial groups.", col3: "Familia multirracial" },
+    { col1: "single-parent familiy", col2: "A family in which only one parent lives with and raises the children.", col3: "Familia monoparental" },
+    { col1: "blended family", col2: "A family consisting of a couple and the children of one or both of their previous relationships.", col3: "Familia reconstituida" },
+    { col1: "unmarried couple", col2: "Two people living together in a romantic relationship without being legally married.", col3: "Pareja no casada / Pareja de hecho" },
+    { col1: "boundaries", col2: "Real or metaphorical limits or guidelines that define acceptable behavior and personal space.", col3: "Límites" },
+    { col1: "floundering", col2: "Experiencing difficulty or confusion and struggling to decide what to do next.", col3: "Desorientado / Dando tumbos" },
+    { col1: "childless family", col2: "A family or couple that does not have children.", col3: "Familia/Pareja sin hijos" },
+    { col1: "wlak down the aisle", col2: "An idiom meaning to get married.", col3: "Pasar por el altar / Casarse" },
+    { col1: "ties the knot", col2: "An informal idiom meaning to get married.", col3: "Casarse / Unir sus vidas" },
+    { col1: "baby in the oven", col2: "An informal idiom indicating that a woman is pregnant.", col3: "Estar embarazada / Bebé en camino" },
+    { col1: "the spitting image", col2: "An exact likeness or counterpart of someone.", col3: "La viva imagen / Calcado" },
+    { col1: "get on like a house on fire", col2: "To quickly become very friendly and get along extremely well with someone.", col3: "Llevarse de maravilla / Congeniar al instante" },
+    { col1: "follow your parents' footsteps", col2: "To pursue the same career, lifestyle, or path as one's parents.", col3: "Seguir los pasos de los padres" },
+    { col1: "something runs in the family", col2: "A trait, quality, or condition that is common among members of a family.", col3: "Venir de familia / Corre por la sangre" },
+    { col1: "stuck with it", col2: "Continued doing something persistently despite difficulties.", col3: "Perseverar / Mantenerse firme con algo" },
+    { col1: "fixed mindset", col2: "The belief that basic qualities like intelligence or talent are fixed traits that cannot be developed.", col3: "Mentalidad fija" },
+    { col1: "growth findset", col2: "The belief that abilities and intelligence can be developed through dedication and hard work.", col3: "Mentalidad de crecimiento" },
+    { col1: "encouragement", col2: "The action of giving someone support, confidence, or hope.", col3: "Ánimo / Estímulo" },
+    { col1: "self-control filter", col2: "The psychological ability to regulate one's emotions, impulses, and expressions.", col3: "Filtro de autocontrol" },
+    { col1: "witty", col2: "Showing or characterized by quick and inventive verbal humor.", col3: "Ingenioso / Agudo" },
+    { col1: "funny", col2: "Causing laughter or amusement; humorous.", col3: "Divertido / Gracioso" },
+    { col1: "controlled", col2: "Restrained, disciplined, and maintained under order.", col3: "Controlado / Moderado" },
+    { col1: "confident", col2: "Feeling or showing certainty about oneself or one's expectations.", col3: "Seguro / Confiado" },
+    { col1: "self-critical", col2: "Tending to evaluate or criticize one's own actions, feelings, or abilities harshly.", col3: "Autocrítico" },
+    { col1: "loud", col2: "Making or producing a lot of noise, or strong and forceful in expression.", col3: "Ruidoso / Escandaloso" },
+    { col1: "intrusive", col2: "Causing disruption or annoyance through being unwelcome or uninvited.", col3: "Intrusivo / Entrometido" },
+    { col1: "clever", col2: "Quick to understand, learn, and devise ideas; intelligent.", col3: "Listo / Ingenioso" },
+    { col1: "emotional", col2: "Expressing or possessing strong feelings.", col3: "Emocional / Emotivo" },
+    { col1: "shy", col2: "Nervous or timid in the company of other people.", col3: "Tímido / Vergonzoso" },
+    { col1: "contained", col2: "Showing self-restraint and keeping emotions under control.", col3: "Contenido / Reservado" },
+    { col1: "bridge the gaps", col2: "To reduce or eliminate the differences, distance, or misunderstanding between groups or concepts.", col3: "Salvar las distancias / Acortar diferencias" },
+    { col1: "bilingual household", col2: "A home where two languages are regularly spoken.", col3: "Hogar bilingüe" },
+    { col1: "lost any ability", col2: "Became incapable or suffered a decline in performing a specific skill or function.", col3: "Perder cualquier capacidad/habilidad" },
+    { col1: "pivotal", col2: "Of crucial importance in relation to the development or success of something else.", col3: "Crucial / Fundamental / Clave" },
+    { col1: "upbringing", col2: "The treatment, care, and instruction given to a child while growing up.", col3: "Crianza / Educación infantil" },
+    { col1: "addicted", col2: "Physically or mentally dependent on a particular substance or activity.", col3: "Adicto" },
+    { col1: "hinders", col2: "Creates difficulties or delays that result in slow progress or obstruction.", col3: "Dificulta / Estorba / Obstaculiza" },
+    { col1: "eye-catching headlines", col2: "News or article titles designed specifically to attract quick attention.", col3: "Titulares llamativos" },
+    { col1: "take after somebody", col2: "To resemble an older relative in appearance, character, or behavior.", col3: "Parecerse a alguien (de la familia)" },
+    { col1: "the breadwinner brings home the bacon", col2: "An idiom referring to the main earner in a family who earns the money needed to live.", col3: "El sustento de la familia trae el pan a casa" },
+    { col1: "like two peas in a pod", col2: "Very similar or close to each other in appearance, interests, or behavior.", col3: "Como dos gotas de agua" },
+    { col1: "like chalk and cheese", col2: "Completely different from each other.", col3: "Como la noche y el día" },
+    { col1: "blood is thicker than water", col2: "Family relationships and loyalty are stronger and more important than any other bonds.", col3: "La sangre tira más que el agua" },
+    { col1: "fall out with somebody", col2: "To argue with someone and stop being friendly with them as a result.", col3: "Discutir / Pelearse con alguien" },
+    { col1: "the black sheep of the family", col2: "A member of a family who is regarded as a disgrace or embarrassment.", col3: "La oveja negra de la familia" },
+    { col1: "be named after somebody", col2: "To be given the same name as another person.", col3: "Llevar el nombre de alguien" },
+    { col1: "touchy", col2: "Oversensitive and easily offended or upset.", col3: "Susceptible / Cosquilloso" },
+    { col1: "thick-skinned", col2: "Not easily offended, upset, or affected by criticism.", col3: "De piel dura / Insensible a las críticas" },
+    { col1: "daredevil", col2: "A recklessly bold or adventurous person.", col3: "Temerario / Osado" },
+    { col1: "risk-averse", col2: "Reluctant or unwilling to take risks.", col3: "Adiverso al riesgo / Precavido" },
+    { col1: "accomplished", col2: "Highly skilled, expert, or successfully trained in a specific area.", col3: "Consolidado / Experto" },
+    { col1: "underperforming", col2: "Performing below expectation or potential.", col3: "Rendir por debajo de lo esperado" },
+    { col1: "gregarious", col2: "Fond of company; sociable and enjoying the presence of others.", col3: "Gregario / Sociable" },
+    { col1: "withdrawn", col2: "Shy, quiet, and preferring to be alone rather than with other people.", col3: "Retraído / Introvertido" },
+    { col1: "reserved", col2: "Slow to reveal emotions or opinions; quiet and restrained.", col3: "Reservado" },
+    { col1: "open", col2: "Frank, candid, and transparent in expressing thoughts and emotions.", col3: "Abierto / Sincero" },
+    { col1: "domineering", col2: "Asserting one's own will over others in an arrogant and tyrannical way.", col3: "Dominante / Autoritario" },
+    { col1: "submissive", col2: "Ready to conform to the authority or will of others; compliant.", col3: "Sumiso" },
+    { col1: "driven", col2: "Motivated by a strong determination to achieve specific goals.", col3: "Ambicioso / Determinado" },
+    { col1: "cooperative", col2: "Involving mutual assistance or willingness to work together toward a common goal.", col3: "Cooperativo / Colaborador" },
+    { col1: "exacting", col2: "Making great demands on one's skill, care, or effort; rigorous.", col3: "Exigente / Riguroso" },
+    { col1: "easy-going", col2: "Relaxed and tolerant in approach or manner; not easily upset.", col3: "Tranquilo / Relajado" },
+    { col1: "self-absorbed", col2: "Preoccupied with one's own feelings, interests, or situation.", col3: "Ensimismado" },
+    { col1: "altruistic", col2: "Showing a disinterested and selfless concern for the well-being of others.", col3: "Altruista / Desinteresado" },
+    { col1: "prudent", col2: "Acting with or showing care and thought for the future; sensible.", col3: "Prudente / Sensato" },
+    { col1: "reckless", col2: "Acting without thinking about the dangerous consequences of one's actions.", col3: "Imprudente / Temerario" },
+    { col1: "unflappable", col2: "Having or showing calmness in a crisis or difficult situation.", col3: "Imperturbable / Inalterable" },
+    { col1: "temperamental", col2: "Unpredictable and prone to erratic mood changes or outbursts.", col3: "Temperamental / Voluble" },
+    { col1: "adaptable", col2: "Able to adjust or be adjusted to new conditions easily.", col3: "Adaptable" },
+    { col1: "lenient", col2: "Permissive, merciful, or tolerant; not severe in discipline.", col3: "Indulgente / Permisivo" },
+    { col1: "rigid", col2: "Unwilling to change or compromise; stiff and inflexible.", col3: "Rígido / Inflexible" },
+    { col1: "fussy", col2: "Fastidious and hard to please; showing excessive concern about details.", col3: "Tiquismiquis" },
+    { col1: "tight-lipped", col2: "Reluctant to give information, express feelings, or speak.", col3: "Hermético / Callado" },
+    { col1: "candid", col2: "Truthful, straightforward, and frank in statement or expression.", col3: "Sincero / Franco" },
+    { col1: "boastful", col2: "Showing excessive pride and self-satisfaction in one's achievements.", col3: "Presuntuoso / Fanfarrón" },
+    { col1: "conscientious", col2: "Wishing to do one's work or duty thoroughly and carefully.", col3: "Concienzudo / Meticuloso" },
+    { col1: "negligent", col2: "Failing to take proper care in doing something; careless.", col3: "Negligente / Descuidado" },
+    { col1: "stubborn", col2: "Having or showing resolve not to change one's attitude or position; obstinate.", col3: "Terco / Cabezota" },
+    { col1: "respile care", col2: "Temporary institutional or home care provided to a dependent person to give relief.", col3: "Cuidado de respiro" },
+    { col1: "boomerang kid", col2: "A young adult who returns to live with their parents after a period of independence.", col3: "Hijo bumerán" },
+    { col1: "helicopter parent", col2: "A parent who pays extremely close attention to a child's experiences and problems, overprotecting them.", col3: "Padre/Madre helicóptero" },
+    { col1: "tiger parenting", col2: "A strict and demanding style of parenting aimed at fostering high academic and social achievement.", col3: "Crianza tigre" },
+    { col1: "empty-nester", col2: "A parent whose children have grown up and left home.", col3: "Padre/Madre con síndrome del nido vacío" },
+    { col1: "free-range parenting", col2: "A parenting style that fosters independence in children by giving them reasonable freedom.", col3: "Crianza al aire libre / Autónoma" },
+    { col1: "fostering", col2: "The action of bringing up a child who is not one's own by birth for a period of time without legal adoption.", col3: "Acogida temporal" },
+    { col1: "sandwich generation", col2: "A generation of adults who care for their aging parents while supporting their own children.", col3: "Generación sándwich" }
+  ];
+
+  let currentG1Row = null;
+  let currentG2Row = null;
+  let currentG3Row = null;
+  
+  let stats = {
+    g1: { correct: 0, incorrect: 0 },
+    g2: { correct: 0, incorrect: 0 },
+    g3: { correct: 0, incorrect: 0 }
+  };
+
+  function updateScoreDisplay() {
+    document.getElementById('g1-correct').innerText = stats.g1.correct;
+    document.getElementById('g1-incorrect').innerText = stats.g1.incorrect;
+    
+    document.getElementById('g2-correct').innerText = stats.g2.correct;
+    document.getElementById('g2-incorrect').innerText = stats.g2.incorrect;
+
+    document.getElementById('g3-correct').innerText = stats.g3.correct;
+    document.getElementById('g3-incorrect').innerText = stats.g3.incorrect;
+
+    const totalCorrect = stats.g1.correct + stats.g2.correct + stats.g3.correct;
+    const totalIncorrect = stats.g1.incorrect + stats.g2.incorrect + stats.g3.incorrect;
+
+    document.getElementById('total-correct').innerText = totalCorrect;
+    document.getElementById('total-incorrect').innerText = totalIncorrect;
+  }
+
+  function switchGame(gameNum) {
+    document.getElementById('nav-g1').classList.toggle('active', gameNum === 1);
+    document.getElementById('nav-g2').classList.toggle('active', gameNum === 2);
+    document.getElementById('nav-g3').classList.toggle('active', gameNum === 3);
+    
+    document.getElementById('game1').classList.toggle('active', gameNum === 1);
+    document.getElementById('game2').classList.toggle('active', gameNum === 2);
+    document.getElementById('game3').classList.toggle('active', gameNum === 3);
+  }
+
+  function getRandomRow() {
+    return vocabulary[Math.floor(Math.random() * vocabulary.length)];
+  }
+
+  // --- GAME 1 ---
+  function nextGame1() {
+    currentG1Row = getRandomRow();
+    document.getElementById('g1-prompt').innerText = currentG1Row.col2;
+    document.getElementById('g1-input').value = '';
+    document.getElementById('g1-input').disabled = false;
+    document.getElementById('g1-submit').style.display = 'block';
+    document.getElementById('g1-result').style.display = 'none';
+  }
+
+  function checkGame1() {
+    const userInput = document.getElementById('g1-input').value.trim().toLowerCase();
+    const target = currentG1Row.col1.toLowerCase();
+    const isCorrect = userInput === target;
+
+    if (isCorrect) stats.g1.correct++; else stats.g1.incorrect++;
+    updateScoreDisplay();
+
+    const resultBox = document.getElementById('g1-result');
+    resultBox.className = 'result-box ' + (isCorrect ? 'correct' : 'incorrect');
+    document.getElementById('g1-status').innerHTML = isCorrect ? '<strong>Correct!</strong>' : '<strong>Incorrect.</strong>';
+
+    document.getElementById('g1-solution').innerHTML = `
+      <strong>Word:</strong> ${currentG1Row.col1}<br>
+      <strong>Definition:</strong> ${currentG1Row.col2}<br>
+      <strong>Translation:</strong> ${currentG1Row.col3}
+    `;
+
+    document.getElementById('g1-input').disabled = true;
+    document.getElementById('g1-submit').style.display = 'none';
+    resultBox.style.display = 'block';
+  }
+
+  // --- GAME 2 ---
+  function nextGame2() {
+    currentG2Row = getRandomRow();
+    document.getElementById('g2-prompt').innerText = `What is the definition of: "${currentG2Row.col1}"?`;
+
+    const options = [currentG2Row.col2];
+    while (options.length < 4 && vocabulary.length >= 4) {
+      const randomRow = getRandomRow();
+      if (!options.includes(randomRow.col2)) {
+        options.push(randomRow.col2);
+      }
+    }
+
+    options.sort(() => Math.random() - 0.5);
+
+    const optionsContainer = document.getElementById('g2-options');
+    optionsContainer.innerHTML = '';
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerText = opt;
+      btn.onclick = () => checkGame2(opt);
+      optionsContainer.appendChild(btn);
+    });
+
+    document.getElementById('g2-result').style.display = 'none';
+  }
+
+  function checkGame2(selectedOption) {
+    const isCorrect = selectedOption === currentG2Row.col2;
+
+    if (isCorrect) stats.g2.correct++; else stats.g2.incorrect++;
+    updateScoreDisplay();
+
+    const resultBox = document.getElementById('g2-result');
+    resultBox.className = 'result-box ' + (isCorrect ? 'correct' : 'incorrect');
+    document.getElementById('g2-status').innerHTML = isCorrect ? '<strong>Correct!</strong>' : '<strong>Incorrect.</strong>';
+
+    document.getElementById('g2-solution').innerHTML = `
+      <strong>Word:</strong> ${currentG2Row.col1}<br>
+      <strong>Definition:</strong> ${currentG2Row.col2}<br>
+      <strong>Translation:</strong> ${currentG2Row.col3}
+    `;
+
+    document.querySelectorAll('#g2-options .option-btn').forEach(btn => btn.disabled = true);
+    resultBox.style.display = 'block';
+  }
+
+  // --- GAME 3 ---
+  function nextGame3() {
+    currentG3Row = getRandomRow();
+    document.getElementById('g3-prompt').innerText = `Which word matches this definition:\n\n"${currentG3Row.col2}"?`;
+
+    const options = [currentG3Row.col1];
+    while (options.length < 4 && vocabulary.length >= 4) {
+      const randomRow = getRandomRow();
+      if (!options.includes(randomRow.col1)) {
+        options.push(randomRow.col1);
+      }
+    }
+
+    options.sort(() => Math.random() - 0.5);
+
+    const optionsContainer = document.getElementById('g3-options');
+    optionsContainer.innerHTML = '';
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerText = opt;
+      btn.onclick = () => checkGame3(opt);
+      optionsContainer.appendChild(btn);
+    });
+
+    document.getElementById('g3-result').style.display = 'none';
+  }
+
+  function checkGame3(selectedOption) {
+    const isCorrect = selectedOption === currentG3Row.col1;
+
+    if (isCorrect) stats.g3.correct++; else stats.g3.incorrect++;
+    updateScoreDisplay();
+
+    const resultBox = document.getElementById('g3-result');
+    resultBox.className = 'result-box ' + (isCorrect ? 'correct' : 'incorrect');
+    document.getElementById('g3-status').innerHTML = isCorrect ? '<strong>Correct!</strong>' : '<strong>Incorrect.</strong>';
+
+    document.getElementById('g3-solution').innerHTML = `
+      <strong>Word:</strong> ${currentG3Row.col1}<br>
+      <strong>Definition:</strong> ${currentG3Row.col2}<br>
+      <strong>Translation:</strong> ${currentG3Row.col3}
+    `;
+
+    document.querySelectorAll('#g3-options .option-btn').forEach(btn => btn.disabled = true);
+    resultBox.style.display = 'block';
+  }
+
+  // Initialize games
+  nextGame1();
+  nextGame2();
+  nextGame3();
+</script>
+
+</body>
+</html>
