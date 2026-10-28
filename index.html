@@ -13,6 +13,8 @@
       --text: #1f2937;
       --success: #10b981;
       --error: #ef4444;
+      --reset-bg: #64748b;
+      --reset-hover: #475569;
     }
 
     body {
@@ -40,7 +42,7 @@
       color: var(--primary);
     }
 
-    /* Score Board desdoblado en 3 líneas + Total */
+    /* Score Board y botón de reset */
     .score-board {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -48,6 +50,36 @@
       padding: 12px 16px;
       margin-bottom: 20px;
       font-size: 0.9rem;
+    }
+
+    .score-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .score-header span {
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .btn-reset {
+      background: var(--reset-bg);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-reset:hover {
+      background: var(--reset-hover);
     }
 
     .score-row {
@@ -189,8 +221,12 @@
 <div class="container">
   <h1>Vocabulary Games</h1>
 
-  <!-- Desglosado Score Board -->
+  <!-- Score Board con botón de Reset -->
   <div class="score-board">
+    <div class="score-header">
+      <span>Scoreboard</span>
+      <button class="btn-reset" onclick="resetStats()">Reset Counters</button>
+    </div>
     <div class="score-row">
       <span>Game 1: Guess the Word</span>
       <span>Correct: <strong id="g1-correct" class="score-correct">0</strong> | Incorrect: <strong id="g1-incorrect" class="score-incorrect">0</strong></span>
@@ -404,6 +440,16 @@
 
     document.getElementById('total-correct').innerText = totalCorrect;
     document.getElementById('total-incorrect').innerText = totalIncorrect;
+  }
+
+  // Función para resetear todos los contadores
+  function resetStats() {
+    stats = {
+      g1: { correct: 0, incorrect: 0 },
+      g2: { correct: 0, incorrect: 0 },
+      g3: { correct: 0, incorrect: 0 }
+    };
+    updateScoreDisplay();
   }
 
   function switchGame(gameNum) {
